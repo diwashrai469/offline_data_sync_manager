@@ -4,7 +4,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 
 class ConnectivityService {
   final Connectivity _connectivity = Connectivity();
-  StreamSubscription<ConnectivityResult>? _connectivitySubscription;
+  StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
   final StreamController<bool> _connectivityController =
       StreamController<bool>.broadcast();
 
@@ -19,26 +19,24 @@ class ConnectivityService {
     _connectivityController.add(_isOnline);
 
     // Listen to connectivity changes
-    _connectivitySubscription =
-        _connectivity.onConnectivityChanged.listen(
-              (ConnectivityResult result) async {
-                    final wasOnline = _isOnline;
-                    _isOnline = await _checkConnectivity();
+    _connectivitySubscription = _connectivity.onConnectivityChanged.listen((
+      List<ConnectivityResult> results,
+    ) async {
+      final wasOnline = _isOnline;
+      _isOnline = await _checkConnectivity();
 
-                    if (wasOnline != _isOnline) {
-                      _connectivityController.add(_isOnline);
-                    }
-                  }
-                  as void Function(List<ConnectivityResult> event)?,
-            )
-            as StreamSubscription<ConnectivityResult>?;
+      if (wasOnline != _isOnline) {
+        _connectivityController.add(_isOnline);
+      }
+    });
   }
 
   Future<bool> _checkConnectivity() async {
     try {
-      final connectivityResult = await _connectivity.checkConnectivity();
+      final connectivityResults = await _connectivity.checkConnectivity();
 
-      if (connectivityResult == ConnectivityResult.none) {
+      if (connectivityResults.isEmpty ||
+          connectivityResults.contains(ConnectivityResult.none)) {
         return false;
       }
 
